@@ -1,10 +1,12 @@
-// MCP tools. They read D1; only refresh_activity calls Garmin, for one activity on explicit request.
+// MCP tools. They read D1. get_sleep / get_daily_wellness fetch missing recent days from Garmin first
+// (read-through); refresh_activity re-pulls one activity on explicit request.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Env } from '../env.ts';
 import { activitiesBetween, activityById, dailyWellness, sleepNights, syncStatus } from '../db/queries.ts';
 import { addDays, daysBetweenInclusive, isIsoDate, OWNER_TIME_ZONE, todayIn } from '../shared/dates.ts';
 import { errorDetail, log } from '../shared/log.ts';
+import { ensureRecentDays, missingNotice, READ_THROUGH_DAYS } from '../sync/read-through.ts';
 import { refreshActivity } from '../sync/refresh-activity.ts';
 import { presentActivityDetail, presentActivitySummary, presentSleep, presentWellness } from './present.ts';
 
@@ -37,6 +39,12 @@ const json = (value: unknown) => ({
 });
 const fail = (message: string) => ({ content: [{ type: 'text' as const, text: message }], isError: true });
 
+const READ_THROUGH_NOTE =
+  `Days of the last ${READ_THROUGH_DAYS} that are not stored yet are fetched from Garmin during the call. ` +
+  'Every requested day without data is listed in `missing` with a reason (not_synced_yet: Garmin has nothing ' +
+  'yet, the watch has probably not synced; no_data_at_garmin; garmin_unavailable; future_date) and summarised ' +
+  'in `notice`. Tell the user about `notice` instead of presenting missing days as empty values. ';
+
 export function createMcpServer(env: Env): McpServer {
   const server = new McpServer({ name: 'garmin', version: '0.1.0' });
   const readOnly = { readOnlyHint: true, openWorldHint: false };
@@ -52,15 +60,28 @@ export function createMcpServer(env: Env): McpServer {
         'no number), avg_sleep_stress, avg_respiration, overnight HRV (hrv_last_night_ms, hrv_weekly_avg_ms, ' +
         'hrv_status, balanced range; from Garmin HRV service), resting_hr and Body Battery gained during sleep / ' +
         'at wake (from the Garmin daily summary of that day). ' +
+        READ_THROUGH_NOTE +
         SOURCE_NOTE,
       inputSchema: rangeArgs,
-      annotations: { ...readOnly, title: 'Sleep by night' },
+      annotations: { ...readOnly, openWorldHint: true, title: 'Sleep by night' },
     },
     async ({ start_date, end_date }) => {
       const range = resolveRange(start_date, end_date);
       if ('error' in range) return fail(range.error);
+      const { missing, fetched } = await ensureRecentDays(env, {
+        table: 'sleep_nights',
+        ...range,
+        tool: 'get_sleep',
+      });
       const nights = await sleepNights(env.DB, range.start, range.end);
-      return json({ start_date: range.start, end_date: range.end, nights: nights.map(presentSleep) });
+      return json({
+        start_date: range.start,
+        end_date: range.end,
+        notice: missingNotice(missing),
+        missing,
+        fetched_from_garmin_now: fetched,
+        nights: nights.map(presentSleep),
+      });
     },
   );
 
@@ -72,15 +93,28 @@ export function createMcpServer(env: Env): McpServer {
         'Daily wellness per calendar day: resting_hr, resting_hr_7d_avg, min/max HR, Body Battery ' +
         '(min, max, charged, drained, during_sleep, at_wake), stress (avg, max, qualifier), steps and step goal. ' +
         'Today is partial until the day ends. ' +
+        READ_THROUGH_NOTE +
         SOURCE_NOTE,
       inputSchema: rangeArgs,
-      annotations: { ...readOnly, title: 'Daily wellness' },
+      annotations: { ...readOnly, openWorldHint: true, title: 'Daily wellness' },
     },
     async ({ start_date, end_date }) => {
       const range = resolveRange(start_date, end_date);
       if ('error' in range) return fail(range.error);
+      const { missing, fetched } = await ensureRecentDays(env, {
+        table: 'daily_wellness',
+        ...range,
+        tool: 'get_daily_wellness',
+      });
       const days = await dailyWellness(env.DB, range.start, range.end);
-      return json({ start_date: range.start, end_date: range.end, days: days.map(presentWellness) });
+      return json({
+        start_date: range.start,
+        end_date: range.end,
+        notice: missingNotice(missing),
+        missing,
+        fetched_from_garmin_now: fetched,
+        days: days.map(presentWellness),
+      });
     },
   );
 
