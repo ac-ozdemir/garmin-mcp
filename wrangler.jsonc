@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "garmin-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // Required by the OAuth provider when it fetches Client ID Metadata Documents.
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "triggers": {
+    // Europe/Istanbul is UTC+3 all year: 07:30 UTC = 10:30, 18:30 UTC = 21:30.
+    "crons": ["30 7 * * *", "30 18 * * *"],
+  },
+  "vars": {
+    "PUBLIC_ORIGIN": "https://garmin-mcp.acozdemir1907.workers.dev",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "garmin",
+      "database_id": "dd9481e7-3484-48b3-ad78-61b4a2f11d30",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "8db65c88e2434d9dbf36905f34a5a187" }],
+}

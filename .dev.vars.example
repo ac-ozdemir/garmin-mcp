@@ -1,0 +1,2 @@
+# Copy to .dev.vars (gitignored). Created at connect.garmin.com/app/settings/personalApiToken
+GARMIN_API_KEY=

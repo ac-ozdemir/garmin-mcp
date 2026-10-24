@@ -1,0 +1,39 @@
+{
+  "name": "garmin-mcp",
+  "version": "0.1.0",
+  "description": "Read-only bridge from the Garmin Connect Personal API to Claude via a remote MCP server on Cloudflare Workers",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "db:migrate": "wrangler d1 migrations apply garmin --remote",
+    "backfill": "node scripts/backfill.ts",
+    "probe": "node scripts/probe.mjs"
+  },
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261024.1",
+    "@eslint/js": "^10.0.1",
+    "@garmin/fitsdk": "^21.218.0",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.2.4",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^4.6.7"
+  },
+  "private": true
+}

@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+# Raw Garmin responses contain personal health data; never commit them.
+probe-output/
+# Garmin's OpenAPI spec is Garmin's content: kept locally, not redistributed.
+docs/reference/
