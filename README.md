@@ -114,7 +114,9 @@ responses to `probe-output/`, which is gitignored because it holds personal heal
 ## Operations
 
 - **Logs**: Workers Logs (observability enabled), structured JSON. Tokens and health values are never logged.
-- **Sync history**: `get_sync_status`, or `npx wrangler d1 execute garmin --remote --command "SELECT * FROM sync_runs ORDER BY id DESC LIMIT 5"`.
+- **Sync history**: `get_sync_status`, or `npx wrangler d1 execute garmin --remote --command "SELECT * FROM sync_runs ORDER BY started_at DESC LIMIT 5"`.
+  `trigger` is `cron 30 7 * * *` / `cron 30 18 * * *` for scheduled runs, `backfill` for the history import, and
+  `manual` for single-activity refreshes (`counts_json.source` is `mcp` or `script`).
 - **Key rotation**: Garmin keys expire (max 1 year; Garmin e-mails a week before). Create a new key, then run
   `npx wrangler secret put GARMIN_API_KEY` and update `.dev.vars`.
 

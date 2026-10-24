@@ -64,7 +64,7 @@ export interface SyncStatus {
 
 export async function syncStatus(db: D1Database): Promise<SyncStatus> {
   const [runs, sleep, wellness, acts] = await db.batch([
-    db.prepare('SELECT * FROM sync_runs ORDER BY id DESC LIMIT 5'),
+    db.prepare('SELECT * FROM sync_runs ORDER BY started_at DESC LIMIT 5'),
     db.prepare(
       'SELECT MIN(calendar_date) AS first, MAX(calendar_date) AS last, COUNT(*) AS rows FROM sleep_nights',
     ),

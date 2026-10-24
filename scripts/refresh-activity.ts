@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { GarminClient } from '../src/garmin/client.ts';
 import { toSqlText, upsertActivity } from '../src/db/statements.ts';
 import { toActivityRow } from '../src/sync/mappers.ts';
-import { fetchActivityItem } from '../src/sync/refresh-activity.ts';
+import { fetchActivityItem, manualRunStatement } from '../src/sync/refresh-activity.ts';
 
 const DATABASE = 'garmin';
 
@@ -19,11 +19,19 @@ async function main(): Promise<void> {
     ?.trim();
   if (!apiKey) throw new Error('GARMIN_API_KEY missing in .dev.vars');
 
+  const startedAt = new Date().toISOString();
   const item = await fetchActivityItem(await GarminClient.connect(apiKey), activityId);
   if (!item) throw new Error(`Garmin has no activity ${activityId}`);
-  const row = toActivityRow(item, new Date().toISOString());
+  const row = toActivityRow(item, startedAt);
+  const day = row.start_time_local?.slice(0, 10) ?? null;
 
-  const sql = toSqlText(upsertActivity(row));
+  // Logged as trigger 'manual' in sync_runs, like the MCP tool, so it is not mistaken for a cron run.
+  const sql = [
+    upsertActivity(row),
+    manualRunStatement({ startedAt, activityId, day, source: 'script', error: null }),
+  ]
+    .map(toSqlText)
+    .join(' ');
   execFileSync('npx', ['wrangler', 'd1', 'execute', DATABASE, '--remote', '--command', sql, '--yes'], {
     stdio: ['ignore', 'ignore', 'inherit'],
   });
