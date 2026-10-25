@@ -106,7 +106,7 @@ npm test             # unit tests
 npm run typecheck
 npm run lint
 npx wrangler dev --var PUBLIC_ORIGIN:http://localhost:8787 --var OWNER_PASSWORD:<16+ chars> --test-scheduled
-curl "http://localhost:8787/__scheduled?cron=30+7+*+*+*"          # run the sync once
+curl "http://localhost:8787/__scheduled?cron=30+5+*+*+*"          # run the sync once
 node scripts/oauth-smoke.mjs http://localhost:8787 <password>    # DCR -> PKCE -> token -> tools/list
 ```
 
