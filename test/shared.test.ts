@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isIsoDate, todayIn, windowsBackwards } from '../src/shared/dates.ts';
-import { toSqlText, upsertSleep } from '../src/db/statements.ts';
+import { toSqlText, updateDailyCalories, upsertSleep } from '../src/db/statements.ts';
 import { toSleepRow } from '../src/sync/mappers.ts';
 import { formatPace } from '../src/mcp/present.ts';
 
@@ -22,6 +22,22 @@ describe('dates', () => {
       { start: '2026-09-24', end: '2026-10-24' },
       { start: '2026-09-01', end: '2026-09-23' },
     ]);
+  });
+});
+
+describe('updateDailyCalories', () => {
+  it('touches only the calorie columns of an existing day', () => {
+    const { sql, params } = updateDailyCalories({
+      calendar_date: '2026-10-23',
+      burned_total_kcal: 3000,
+      burned_active_kcal: 1000,
+      burned_resting_kcal: 2000,
+    });
+    expect(sql).toMatch(
+      /^UPDATE daily_wellness SET burned_total_kcal = \?, burned_active_kcal = \?, burned_resting_kcal = \? WHERE/,
+    );
+    expect(sql).not.toMatch(/body_battery|resting_hr/);
+    expect(params).toEqual([3000, 1000, 2000, '2026-10-23']);
   });
 });
 

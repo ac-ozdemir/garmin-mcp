@@ -93,6 +93,11 @@ some endpoints answer `200` with an **empty body** instead of `[]`; the client t
 `bodyBatteryDuringSleep`, `bodyBatteryAtWakeTime`, `lastSevenDaysAvgRestingHeartRate`.
 Example (illustrative): RHR 52, 7-day RHR 51, BB min 10 / max 70, BB at wake 68, avg stress 28.
 
+**Calories** come from v2 `calories`: `burnedTotal` = `burnedActive` + `burnedResting` (BMR), true for all
+1463 stored days. Example (illustrative): 3000 = 1000 + 2000. For today the values are partial (BMR accrues
+through the day). `consumed*` fields are only filled when food is logged in Garmin Connect; they are not
+stored. Per-activity calories (`calories`, `bmrCalories`) are in the activity list.
+
 ## Activities (question 1)
 
 - `GET /activitylist-service/activities/search/activities?startDate&endDate&start&limit` → `SummarizedActivityDTO[]`.

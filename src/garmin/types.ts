@@ -44,6 +44,7 @@ export interface UserDailySummaryV2DTO {
   bodyBattery?: { minValue?: number; maxValue?: number; chargedValue?: number; drainedValue?: number };
   stress?: { avgLevel?: number; maxLevel?: number; qualifier?: string };
   movement?: { steps?: { value?: number; goal?: number } };
+  calories?: { burnedTotal?: number; burnedActive?: number; burnedResting?: number };
 }
 
 export interface DailySummariesV2Response {

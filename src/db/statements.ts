@@ -22,6 +22,22 @@ function upsert(table: string, key: string, row: object): Statement {
 export const upsertSleep = (row: SleepRow) => upsert('sleep_nights', 'calendar_date', row);
 export const upsertHrv = (row: HrvRow) => upsert('hrv_nights', 'calendar_date', row);
 export const upsertDailyWellness = (row: DailyWellnessRow) => upsert('daily_wellness', 'calendar_date', row);
+
+/**
+ * Sets only the calorie columns of an existing day. Used by the calories-only backfill, which reads v2 alone:
+ * a full upsert would null the v1-only columns (Body Battery during sleep, 7-day resting HR).
+ */
+export function updateDailyCalories(
+  row: Pick<
+    DailyWellnessRow,
+    'calendar_date' | 'burned_total_kcal' | 'burned_active_kcal' | 'burned_resting_kcal'
+  >,
+): Statement {
+  return {
+    sql: 'UPDATE daily_wellness SET burned_total_kcal = ?, burned_active_kcal = ?, burned_resting_kcal = ? WHERE calendar_date = ?',
+    params: [row.burned_total_kcal, row.burned_active_kcal, row.burned_resting_kcal, row.calendar_date],
+  };
+}
 export const upsertActivity = (row: ActivityRow) => upsert('activities', 'activity_id', row);
 
 export function insertSyncRun(row: SyncRunRow): Statement {

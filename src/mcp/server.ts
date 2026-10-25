@@ -91,7 +91,8 @@ export function createMcpServer(env: Env): McpServer {
       title: 'Daily wellness',
       description:
         'Daily wellness per calendar day: resting_hr, resting_hr_7d_avg, min/max HR, Body Battery ' +
-        '(min, max, charged, drained, during_sleep, at_wake), stress (avg, max, qualifier), steps and step goal. ' +
+        '(min, max, charged, drained, during_sleep, at_wake), stress (avg, max, qualifier), steps and step goal, ' +
+        'calories burned (burned_total_kcal = burned_active_kcal + burned_resting_kcal, the resting part is BMR). ' +
         'Today is partial until the day ends. ' +
         READ_THROUGH_NOTE +
         SOURCE_NOTE,
@@ -124,7 +125,7 @@ export function createMcpServer(env: Env): McpServer {
       title: 'List activities',
       description:
         'Activities whose local start date is in the range, newest first: id, type, name, the user-written ' +
-        'description (null if none was written in Garmin Connect), distance, duration, avg HR, training load. ' +
+        'description (null if none was written in Garmin Connect), distance, duration, avg HR, calories (kcal), training load. ' +
         'Defaults to the last 7 days. Use get_activity for full detail. ' +
         SOURCE_NOTE,
       inputSchema: {

@@ -80,6 +80,7 @@ export function presentActivitySummary(row: ActivityRow) {
     distance_m: row.distance_m,
     duration_s: row.duration_s,
     avg_hr: row.avg_hr,
+    calories: row.calories,
     training_load: round(row.training_load),
     computed: {
       duration: formatDuration(row.duration_s),

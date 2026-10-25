@@ -50,6 +50,9 @@ export interface DailyWellnessRow {
   stress_qualifier: string | null;
   steps: number | null;
   step_goal: number | null;
+  burned_total_kcal: number | null;
+  burned_active_kcal: number | null;
+  burned_resting_kcal: number | null;
   fetched_at: string;
 }
 

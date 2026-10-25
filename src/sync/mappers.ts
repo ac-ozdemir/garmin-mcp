@@ -82,6 +82,9 @@ export function toDailyWellnessRow(
     stress_qualifier: orNull(v2.stress?.qualifier),
     steps: orNull(v2.movement?.steps?.value),
     step_goal: orNull(v2.movement?.steps?.goal),
+    burned_total_kcal: orNull(v2.calories?.burnedTotal),
+    burned_active_kcal: orNull(v2.calories?.burnedActive),
+    burned_resting_kcal: orNull(v2.calories?.burnedResting),
     fetched_at: fetchedAt,
   };
 }

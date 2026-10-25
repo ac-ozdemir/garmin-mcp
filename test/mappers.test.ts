@@ -54,6 +54,22 @@ describe('toDailyWellnessRow', () => {
     expect(row.steps).toBeNull();
   });
 
+  it('maps burned calories from v2 (illustrative: 3000 = 1000 active + 2000 resting)', () => {
+    const row = toDailyWellnessRow(
+      {
+        calendarDate: '2026-10-23',
+        calories: { burnedTotal: 3000, burnedActive: 1000, burnedResting: 2000 },
+      },
+      undefined,
+      FETCHED,
+    );
+    expect(row).toMatchObject({
+      burned_total_kcal: 3000,
+      burned_active_kcal: 1000,
+      burned_resting_kcal: 2000,
+    });
+  });
+
   it('leaves v1-only fields null when the v1 call is skipped', () => {
     const row = toDailyWellnessRow({ calendarDate: '2026-10-24' }, undefined, FETCHED);
     expect(row.body_battery_during_sleep).toBeNull();
