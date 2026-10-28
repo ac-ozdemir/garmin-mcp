@@ -7,6 +7,7 @@ import {
 } from '@cloudflare/workers-oauth-provider';
 import type { Env } from '../env.ts';
 import { errorDetail, log } from '../shared/log.ts';
+import { clearFailures, currentLockout, hashIp, recordFailure } from './login-limit.ts';
 
 const OWNER_USER_ID = 'owner';
 const MIN_PASSWORD_LENGTH = 16;
@@ -78,7 +79,24 @@ async function submitConsent(request: Request, env: Env): Promise<Response> {
     return new Response(null, { status: 302, headers: denied.headers });
   }
 
+  // Checked before the password, so a correct guess during a lockout is not confirmed either.
+  const ipHash = await hashIp(request.headers.get('CF-Connecting-IP') ?? 'unknown', env.OWNER_PASSWORD);
+  const lockout = await currentLockout(env.DB, ipHash);
+  if (lockout.locked) {
+    log.warn('authorize: locked out', { scope: lockout.scope, retryAfterSeconds: lockout.retryAfterSeconds });
+    const minutes = Math.ceil(lockout.retryAfterSeconds / 60);
+    return html(
+      page(
+        'Too many attempts',
+        `<p>Too many wrong passwords. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.</p>`,
+      ),
+      429,
+      new Headers({ 'Retry-After': String(lockout.retryAfterSeconds) }),
+    );
+  }
+
   if (!(await isOwnerPassword(String(form.get('password') ?? ''), env.OWNER_PASSWORD))) {
+    await recordFailure(env.DB, ipHash);
     // Slow down guessing; the handle stays valid so the owner can go back and retry.
     await new Promise((resolve) => setTimeout(resolve, FAILED_LOGIN_DELAY_MS));
     log.warn('authorize: wrong owner password');
@@ -90,6 +108,7 @@ async function submitConsent(request: Request, env: Env): Promise<Response> {
       401,
     );
   }
+  await clearFailures(env.DB, ipHash);
 
   const approved = await oauth.approveConsent(request, handle, { scope: form.getAll('scope').map(String) });
   const { redirectTo } = await oauth.completeAuthorization({
